@@ -21,28 +21,23 @@ storybook:
 dev:
     #!/usr/bin/env bash
     set -euo pipefail
-    echo "Starting dev servers..."
-    
-    # Start backend in background and save PID
-    uv run uvicorn app.main:app --reload &
-    BACKEND_PID=$!
-    
-    # Start frontend in background and save PID
-    cd frontend && npm run dev &
-    FRONTEND_PID=$!
     
     # Function to cleanup on exit
     cleanup() {
         echo "Stopping dev servers..."
-        kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
-        wait $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
+        # Kill all child processes of this script
+        pkill -P $$ || true
         exit 0
     }
     
     # Register cleanup on signals
     trap cleanup SIGINT SIGTERM EXIT
     
-    # Wait for both processes
+    # Start both servers in background
+    uv run uvicorn app.main:app --reload &
+    cd frontend && npm run dev &
+    
+    # Wait for all background jobs
     wait
 
 # Format code
