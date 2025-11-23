@@ -38,7 +38,7 @@ export const WithInteraction: Story = {
     await userEvent.type(input, 'Test Item from Storybook');
     await userEvent.click(button);
 
-    // Verify the input still has the value (component doesn't auto-clear)
-    await expect(input).toHaveValue('Test Item from Storybook');
+    // Verify the input is cleared after adding the item
+    await expect(input).toHaveValue('');
   },
 };

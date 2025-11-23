@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
+import { axe } from 'vitest-axe';
 import { MantineProvider } from '@mantine/core';
 import RealTimeList from './RealTimeList';
 
@@ -42,6 +43,12 @@ describe('RealTimeList', () => {
     renderWithMantine(<RealTimeList />);
     expect(screen.getByText('Items (SQLite)')).toBeDefined();
     expect(screen.getByText('Live Updates (WebSocket)')).toBeDefined();
+  });
+
+  it('should have no accessibility violations', async () => {
+    const { container } = renderWithMantine(<RealTimeList />);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
   });
 
   it('fetches items on mount', async () => {

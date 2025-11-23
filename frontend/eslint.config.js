@@ -60,12 +60,20 @@ export default tseslint.config(
   },
   // Unit test files (.test.tsx) - Disable Storybook rules
   {
-    files: ['**/*.test.tsx', '**/*.test.ts', 'vitest.setup.ts'],
+    files: ['**/*.test.tsx', '**/*.test.ts', '**/vitest.setup.ts', 'vitest.d.ts'],
     rules: {
       'storybook/story-exports': 'off',
       'storybook/default-exports': 'off',
       'storybook/use-storybook-expect': 'off',
       'storybook/use-storybook-testing-library': 'off', // Allow @testing-library/react
+      '@typescript-eslint/strict-boolean-expressions': 'off',
+    },
+  },
+  // Declaration files
+  {
+    files: ['vitest.d.ts'],
+    rules: {
+      '@typescript-eslint/no-empty-object-type': 'off',
     },
   },
 );

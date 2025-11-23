@@ -87,6 +87,7 @@ export function RealTimeList() {
           <Group>
             <TextInput
               placeholder="New item title"
+              aria-label="New item title"
               value={newItem}
               onChange={(e) => {
                 setNewItem(e.currentTarget.value);
@@ -94,6 +95,8 @@ export function RealTimeList() {
               style={{ flex: 1 }}
             />
             <Button
+              variant="filled"
+              color="blue.8"
               onClick={() => {
                 void addItem();
               }}
@@ -104,7 +107,7 @@ export function RealTimeList() {
         </Paper>
 
         <Paper withBorder p="md">
-          <Title order={4} mb="md">
+          <Title order={3} mb="md">
             Items (SQLite)
           </Title>
           <List>
@@ -120,7 +123,7 @@ export function RealTimeList() {
         </Paper>
 
         <Paper withBorder p="md">
-          <Title order={4} mb="md">
+          <Title order={3} mb="md">
             Live Updates (WebSocket)
           </Title>
           <List>
