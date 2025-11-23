@@ -40,8 +40,8 @@ def test_websocket_disconnect_doesnt_crash_broadcast() -> None:
             # Both clients are connected
             pass  # _ws2 disconnects here when exiting context
 
-        # ws2 is now disconnected
-        # Server tries to broadcast "client left" to all clients including ws2
+        # _ws2 is now disconnected
+        # Server tries to broadcast "client left" to all clients including _ws2
         # This will crash if the bug exists
 
         # Receive the "client left" message
@@ -52,7 +52,7 @@ def test_websocket_disconnect_doesnt_crash_broadcast() -> None:
         ws1.send_text("test message")
 
         # If the bug exists, this will fail because the server crashed
-        # when trying to send the disconnect message to ws2
+        # when trying to send the disconnect message to _ws2
         data = ws1.receive_text()
         assert "test message" in data
 
@@ -70,3 +70,23 @@ def test_multiple_clients_one_disconnect() -> None:
         # Just testing that connections work
         # The test is that this doesn't raise an exception
         pass
+
+
+def test_rapid_disconnect_during_broadcast() -> None:
+    """
+    Test that multiple rapid disconnects during broadcast don't cause ValueError.
+
+    The bug was: ValueError: list.remove(x): x not in list
+    This happened when broadcast() tried to remove a connection that was
+    already removed by disconnect() or by a previous cleanup iteration.
+    """
+    client = TestClient(app)
+
+    # This test passes if no ValueError is raised
+    # Connect and rapidly disconnect multiple clients
+    for _ in range(10):
+        with client.websocket_connect("/ws"):
+            pass  # Immediately disconnect, triggering broadcast cleanup
+
+    # If we got here without crashing, the fix works
+    assert True

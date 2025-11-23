@@ -54,7 +54,8 @@ class ConnectionManager:
 
         # Remove disconnected clients
         for connection in disconnected_connections:
-            self.active_connections.remove(connection)
+            if connection in self.active_connections:
+                self.active_connections.remove(connection)
 
 
 manager = ConnectionManager()
