@@ -22,17 +22,16 @@ dev:
     #!/usr/bin/env bash
     set -e
     
+    # Trap SIGINT (Ctrl+C) and kill background processes
+    trap 'kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true; exit' INT TERM
+    
     # Start both servers in background
     uv run uvicorn app.main:app --reload &
     BACKEND_PID=$!
     cd frontend && npm run dev &
     FRONTEND_PID=$!
     
-    # Wait for either process to exit or for SIGINT
-    wait -n
-    
-    # Kill both processes
-    kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
+    # Wait for both processes (will be interrupted by trap on Ctrl+C)
     wait $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
 
 # Format code
