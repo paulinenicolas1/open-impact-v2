@@ -13,6 +13,10 @@ dev-backend:
 dev-frontend:
     cd frontend && npm run dev
 
+# Run Storybook
+storybook:
+    cd frontend && npm run storybook
+
 # Start development servers (backend + frontend)
 dev:
     #!/usr/bin/env bash
