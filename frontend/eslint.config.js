@@ -38,6 +38,7 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
       '@typescript-eslint/strict-boolean-expressions': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
+      'storybook/prefer-pascal-case': 'off',
     },
   },
   eslintConfigPrettier,

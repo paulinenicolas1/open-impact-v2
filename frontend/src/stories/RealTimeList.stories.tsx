@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { within, userEvent, expect } from '@storybook/test';
-import { RealTimeList } from '../components/RealTimeList';
+import { RealTimeList } from '../features/items/components/RealTimeList';
 import { MantineProvider } from '@mantine/core';
 import '@mantine/core/styles.css';
 
