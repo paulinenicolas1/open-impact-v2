@@ -1,11 +1,19 @@
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { axe } from 'vitest-axe';
 import { MantineProvider } from '@mantine/core';
-import RealTimeList from './RealTimeList';
+import { RealTimeList } from './RealTimeList';
+import { apiClient } from '../../../lib/apiClient';
+
+vi.mock('../../../lib/apiClient', () => ({
+  apiClient: {
+    get: vi.fn(),
+    post: vi.fn(),
+  },
+}));
 
 // Mock global fetch
-global.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 // Mock WebSocket
 class MockWebSocket {
@@ -19,19 +27,19 @@ class MockWebSocket {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-global.WebSocket = MockWebSocket as any;
+vi.stubGlobal('WebSocket', MockWebSocket);
 
 const renderWithMantine = (component: React.ReactNode) => {
   return render(<MantineProvider>{component}</MantineProvider>);
 };
 
+type MockFn = ReturnType<typeof vi.fn>;
+const mockApiClient = apiClient as unknown as { get: MockFn; post: MockFn };
+
 describe('RealTimeList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (global.fetch as Mock).mockResolvedValue({
-      json: () => Promise.resolve([]),
-    });
+    mockApiClient.get.mockResolvedValue({ data: [] });
   });
 
   afterEach(() => {
@@ -52,40 +60,36 @@ describe('RealTimeList', () => {
   });
 
   it('fetches items on mount', async () => {
-    const mockItems = [{ id: 1, title: 'Item 1', description: 'Desc 1' }];
-    (global.fetch as Mock).mockResolvedValue({
-      json: () => Promise.resolve(mockItems),
+    mockApiClient.get.mockResolvedValueOnce({
+      data: [{ id: 1, title: 'Item 1', description: 'Desc 1' }],
     });
 
     renderWithMantine(<RealTimeList />);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/items');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/items');
       expect(screen.getByText('Item 1')).toBeDefined();
       expect(screen.getByText('Desc 1')).toBeDefined();
     });
   });
 
-  it('adds a new item', () => {
-    (global.fetch as Mock).mockResolvedValueOnce({
-      json: () => Promise.resolve([]),
-    });
-
+  it('adds a new item', async () => {
     renderWithMantine(<RealTimeList />);
 
     const input = screen.getByPlaceholderText('New item title');
-    const button = screen.getByRole('button', { name: /add item/i });
+    const button = screen.getByText('Add Item');
 
     fireEvent.change(input, { target: { value: 'New Item' } });
     fireEvent.click(button);
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      '/api/items',
-      expect.objectContaining({
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'New Item', description: 'Added via frontend' }),
-      }),
-    );
+    await waitFor(() => {
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/items',
+        expect.objectContaining({
+          title: 'New Item',
+          description: 'Added via frontend',
+        }),
+      );
+    });
   });
 });

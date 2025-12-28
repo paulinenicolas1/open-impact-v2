@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 import { beforeAll, afterAll, vi } from 'vitest';
-import { setProjectAnnotations } from '@storybook/react-vite';
+import { setProjectAnnotations } from '@storybook/preview-api';
 import * as projectAnnotations from './preview';
 import * as a11yAddonAnnotations from '@storybook/addon-a11y/preview';
 

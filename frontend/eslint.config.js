@@ -21,7 +21,7 @@ export default tseslint.config(
       ecmaVersion: 2020,
       globals: globals.browser,
       parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json', './tsconfig.test.json'],
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -61,7 +61,7 @@ export default tseslint.config(
   },
   // Unit test files (.test.tsx) - Disable Storybook rules
   {
-    files: ['**/*.test.tsx', '**/*.test.ts', '**/vitest.setup.ts', 'vitest.d.ts'],
+    files: ['**/*.test.tsx', '**/*.test.ts', '**/vitest.setup.ts'],
     rules: {
       'storybook/story-exports': 'off',
       'storybook/default-exports': 'off',
@@ -72,9 +72,11 @@ export default tseslint.config(
   },
   // Declaration files
   {
-    files: ['vitest.d.ts'],
+    files: ['src/vitest-env.d.ts', '**/*.d.ts'],
     rules: {
       '@typescript-eslint/no-empty-object-type': 'off',
+      'storybook/story-exports': 'off',
+      'storybook/default-exports': 'off',
     },
   },
 );

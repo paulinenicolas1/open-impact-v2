@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Meta, StoryObj } from '@storybook/react';
 import { within, userEvent, expect } from '@storybook/test';
 import { RealTimeList } from '../features/items/components/RealTimeList';
 import { MantineProvider } from '@mantine/core';
@@ -24,7 +24,7 @@ export const Default: Story = {};
 
 // Story with interaction test
 export const WithInteraction: Story = {
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
     const canvas = within(canvasElement);
 
     // Verify the component renders

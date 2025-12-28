@@ -10,12 +10,8 @@ import {
   Text,
   Stack,
 } from '@mantine/core';
-
-interface Item {
-  id: number;
-  title: string;
-  description?: string;
-}
+import { apiClient } from '../../../lib/apiClient';
+import type { Item } from '../../items/types';
 
 export function RealTimeList() {
   const [items, setItems] = useState<Item[]>([]);
@@ -23,27 +19,24 @@ export function RealTimeList() {
   const [messages, setMessages] = useState<string[]>([]);
   const ws = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
-    // Fetch initial items
-    void fetch('/api/items')
-      .then((res) => res.json())
-      .then((data: unknown) => {
-        if (Array.isArray(data)) {
-          setItems(data as Item[]);
-        }
-      })
-      .catch((err: unknown) => {
-        console.error(err);
-      });
+  const fetchItems = async () => {
+    try {
+      const response = await apiClient.get<Item[]>('/items');
+      setItems(response.data);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+    }
+  };
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchItems();
     // Connect WebSocket
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     // Direct connection to backend for development reliability
     const wsUrl = import.meta.env.DEV
-      ? `${protocol}//127.0.0.1:8000/ws`
-      : `${protocol}//${window.location.host}/ws`;
-
-    ws.current = new WebSocket(wsUrl);
+      ? `${protocol}//127.0.0.1:8000/api/v1/ws`
+      : `${protocol}//${window.location.host}/api/v1/ws`;
 
     ws.current = new WebSocket(wsUrl);
 
@@ -52,13 +45,7 @@ export function RealTimeList() {
         const data = event.data;
         setMessages((prev) => [...prev, data]);
         if (data.startsWith('New item added')) {
-          void fetch('/api/items')
-            .then((res) => res.json())
-            .then((data: unknown) => {
-              if (Array.isArray(data)) {
-                setItems(data as Item[]);
-              }
-            });
+          void fetchItems();
         }
       }
     };
@@ -70,12 +57,15 @@ export function RealTimeList() {
 
   const addItem = async () => {
     if (!newItem) return;
-    await fetch('/api/items', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: newItem, description: 'Added via frontend' }),
-    });
-    setNewItem('');
+    try {
+      await apiClient.post<Item>('/items', {
+        title: newItem,
+        description: 'Added via frontend',
+      });
+      setNewItem('');
+    } catch (error) {
+      console.error('Error adding item:', error);
+    }
   };
 
   return (

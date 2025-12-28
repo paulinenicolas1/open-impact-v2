@@ -23,13 +23,17 @@ frontend/src/
 ## Key Concepts
 
 ### Feature-Based Architecture
+
 Code is organized by **feature** rather than by type. This means all components, hooks, and API calls related to a specific feature (e.g., "Items") are co-located in `src/features/items`. This makes it easier to delete, refactor, or scale features independently.
 
 ### Shared Components
+
 Generic UI components that are used across multiple features are located in `src/components`.
 
 ### Layout
+
 The application layout is managed by `src/components/layout`, which includes:
+
 - `Layout.tsx`: The main wrapper using Mantine AppShell.
 - `Sidebar.tsx`: The navigation sidebar.
 - `Header.tsx`: The top header.

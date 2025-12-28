@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel
 
-from app.database import get_session
+from app.db.session import get_session
 from app.main import app
 
 # Use in-memory SQLite database for tests
