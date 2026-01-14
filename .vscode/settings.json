@@ -15,7 +15,6 @@
         "editor.defaultFormatter": "dbaeumer.vscode-eslint",
         "editor.formatOnSave": true
     },
-    "python.analysis.typeCheckingMode": "strict",
     "python.testing.pytestArgs": [
         "tests"
     ],
