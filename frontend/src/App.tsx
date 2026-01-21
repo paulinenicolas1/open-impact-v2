@@ -1,12 +1,7 @@
-import { RealTimeList } from './features/items/components/RealTimeList';
-import Layout from './components/layout/Layout';
+import { ClimateDashboard } from './features/climate/ClimateDashboard';
 
 function App() {
-  return (
-    <Layout>
-      <RealTimeList />
-    </Layout>
-  );
+  return <ClimateDashboard />;
 }
 
 export default App;
