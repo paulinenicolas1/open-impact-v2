@@ -41,3 +41,4 @@ This template favors strict typing, composable design, and readable code. See `d
 - Replace example API routes and models with your domain.
 - Update the frontend feature folders to match your product.
 - Add database migrations, auth, and deployment configuration as needed.
+
