@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Header from '../../components/layout/Header';
 
 import { MetricCard } from '../../components/layout/MetricCard';
+import { apiClient } from '../../lib/apiClient';
 
 const summaryText =
   'Analyse comparative approfondie des tendances climatiques et des précipitations observées de 1900 à 2025. Données basées sur les relevés historiques de Météo-France.';
@@ -154,11 +155,8 @@ export function ClimateDashboard() {
     const loadYearlyMetrics = async () => {
       setIsLoadingMetrics(true);
       try {
-        const response = await fetch('/api/v1/annual_data');
-        if (!response.ok) {
-          return;
-        }
-        const payload = (await response.json()) as AnnualDataResponse;
+        const response = await apiClient.get<AnnualDataResponse>('/annual_data');
+        const payload = response.data;
         const rows = resolveAnnualRows(payload);
         const nextMetrics: YearlyMetricMap = {};
         rows.forEach((row) => {
