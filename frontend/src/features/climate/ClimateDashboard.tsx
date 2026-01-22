@@ -15,7 +15,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import Header from '../../components/layout/Header';
 
-import { MetricCard } from './MetricCard';
+import { MetricCard } from '../../components/layout/MetricCard';
 
 const summaryText =
   'Analyse comparative approfondie des tendances climatiques et des précipitations observées de 1900 à 2025. Données basées sur les relevés historiques de Météo-France.';
