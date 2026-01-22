@@ -81,4 +81,4 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [project.scripts]
-meteo = "src.pipelines.cli.main:main"
+meteo = "pipelines.cli.main:main"
