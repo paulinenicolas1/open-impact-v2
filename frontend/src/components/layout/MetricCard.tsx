@@ -1,4 +1,4 @@
-import { Paper, Stack, Text, useMantineTheme } from '@mantine/core';
+import { Paper, Skeleton, Stack, Text, useMantineTheme } from '@mantine/core';
 
 interface MetricCardProps {
   title: string;
@@ -6,6 +6,7 @@ interface MetricCardProps {
   change: string;
   accent: 'orange' | 'blue' | 'gray';
   year: number;
+  isLoading?: boolean;
 }
 
 const accentColors: Record<MetricCardProps['accent'], string> = {
@@ -14,7 +15,14 @@ const accentColors: Record<MetricCardProps['accent'], string> = {
   gray: '#5eead4',
 };
 
-export function MetricCard({ title, value, change, accent, year }: MetricCardProps) {
+export function MetricCard({
+  title,
+  value,
+  change,
+  accent,
+  year,
+  isLoading = false,
+}: MetricCardProps) {
   const theme = useMantineTheme();
   const accentColor = accentColors[accent];
 
@@ -32,12 +40,20 @@ export function MetricCard({ title, value, change, accent, year }: MetricCardPro
         <Text size="xs" tt="uppercase" c="dimmed" style={{ letterSpacing: '0.1em' }}>
           {title} en {year}
         </Text>
-        <Text size="xl" fw={600}>
-          {value}
-        </Text>
-        <Text size="xs" c={accentColor}>
-          {change}
-        </Text>
+        {isLoading ? (
+          <Skeleton height={26} width="60%" radius="sm" />
+        ) : (
+          <Text size="xl" fw={600}>
+            {value}
+          </Text>
+        )}
+        {isLoading ? (
+          <Skeleton height={14} width="40%" radius="sm" />
+        ) : (
+          <Text size="xs" c={accentColor}>
+            {change}
+          </Text>
+        )}
       </Stack>
     </Paper>
   );

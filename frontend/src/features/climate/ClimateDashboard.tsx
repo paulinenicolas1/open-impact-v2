@@ -178,9 +178,11 @@ export function ClimateDashboard() {
   const theme = useMantineTheme();
   const [activeCity, setActiveCity] = useState<CityName>('Paris');
   const [yearlyMetrics, setYearlyMetrics] = useState<YearlyMetricMap>({});
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
 
   useEffect(() => {
     const loadYearlyMetrics = async () => {
+      setIsLoadingMetrics(true);
       try {
         const response = await fetch('/data/output/final_yearly.csv');
         if (!response.ok) {
@@ -207,6 +209,8 @@ export function ClimateDashboard() {
         setYearlyMetrics(nextMetrics);
       } catch (error) {
         console.warn('Impossible de charger les métriques annuelles.', error);
+      } finally {
+        setIsLoadingMetrics(false);
       }
     };
 
@@ -296,6 +300,7 @@ export function ClimateDashboard() {
               change={metrics[card.changeKey]}
               accent={card.accent}
               year={lastFullYear}
+              isLoading={isLoadingMetrics}
             />
           ))}
         </SimpleGrid>
