@@ -8,12 +8,14 @@ from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.db.session import init_db
+from app.services.annual_data import load_annual_data
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     configure_logging(json_logs=False, log_level="INFO")  # In real app, drive via settings
     await init_db()
+    load_annual_data()
     yield
 
 
