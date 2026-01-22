@@ -15,6 +15,8 @@ import {
 } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 
+import { MetricCard } from './MetricCard';
+
 const summaryText =
   'Analyse comparative approfondie des tendances climatiques et des précipitations observées de 1900 à 2025. Données basées sur les relevés historiques de Météo-France.';
 
@@ -355,38 +357,16 @@ export function ClimateDashboard() {
         </Stack>
 
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing={20}>
-          {metricCards.map((card) => {
-            const accentColor =
-              card.accent === 'orange'
-                ? '#fbbf24'
-                : card.accent === 'blue'
-                  ? '#38bdf8'
-                  : '#5eead4';
-            return (
-              <Paper
-                key={card.key}
-                p="md"
-                radius="lg"
-                withBorder
-                style={{
-                  backgroundColor: theme.colors.dark[7],
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                }}
-              >
-                <Stack gap={8}>
-                  <Text size="xs" tt="uppercase" c="dimmed" style={{ letterSpacing: '0.1em' }}>
-                    {card.title} en {lastFullYear}
-                  </Text>
-                  <Text size="xl" fw={600}>
-                    {metrics[card.key]}
-                  </Text>
-                  <Text size="xs" c={accentColor}>
-                    {metrics[card.changeKey]}
-                  </Text>
-                </Stack>
-              </Paper>
-            );
-          })}
+          {metricCards.map((card) => (
+            <MetricCard
+              key={card.key}
+              title={card.title}
+              value={metrics[card.key]}
+              change={metrics[card.changeKey]}
+              accent={card.accent}
+              year={lastFullYear}
+            />
+          ))}
         </SimpleGrid>
 
         <Divider
