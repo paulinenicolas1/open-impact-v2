@@ -70,13 +70,6 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-data-science = [
-    { name = "click" },
-    { name = "pandas" },
-    { name = "plotly" },
-    { name = "pyyaml" },
-    { name = "rich" },
-]
 dev = [
     { name = "httpx" },
     { name = "pytest" },
@@ -85,6 +78,13 @@ dev = [
     { name = "pytest-timeout" },
     { name = "ruff" },
     { name = "ty" },
+]
+pipelines = [
+    { name = "click" },
+    { name = "pandas" },
+    { name = "plotly" },
+    { name = "pyyaml" },
+    { name = "rich" },
 ]
 
 [package.metadata]
@@ -101,13 +101,6 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-data-science = [
-    { name = "click", specifier = ">=8.3.1" },
-    { name = "pandas", specifier = ">=2.3.3" },
-    { name = "plotly", specifier = ">=6.3.1" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "rich", specifier = ">=14.2.0" },
-]
 dev = [
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "pytest", specifier = ">=8.3.0" },
@@ -116,6 +109,13 @@ dev = [
     { name = "pytest-timeout", specifier = ">=2.3.1" },
     { name = "ruff", specifier = ">=0.6.0" },
     { name = "ty", specifier = ">=0.0.1a0" },
+]
+pipelines = [
+    { name = "click", specifier = ">=8.3.1" },
+    { name = "pandas", specifier = ">=2.3.3" },
+    { name = "plotly", specifier = ">=6.3.1" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "rich", specifier = ">=14.2.0" },
 ]
 
 [[package]]

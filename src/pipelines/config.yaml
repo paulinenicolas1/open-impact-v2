@@ -1,0 +1,14 @@
+data_path: data
+stations:
+  brest: {folder: "MENSQ_29", num_poste: "29075001", name: "BREST-GUIPAVAS"}
+  paris: {folder: "MENSQ_75", num_poste: "07156", name: "PARIS-MONTSOURIS"}
+  lille: {folder: "MENSQ_59", num_poste: "07015", name: "LILLE-LESQUIN"}
+  strasbourg: {folder: "MENSQ_67", num_poste: "07190", name: "STRASBOURG-ENTZHEIM"}
+  bordeaux: {folder: "MENSQ_33", num_poste: "07510", name: "BORDEAUX-MERIGNAC"}
+  lyon: {folder: "MENSQ_69", num_poste: "07480", name: "LYON-BRON"}
+  marseille: {folder: "MENSQ_13", num_poste: "07650", name: "MARIGNANE"}
+
+analysis:
+  start_year: 1950
+  end_year: 2026
+  baseline_period: [1961, 1990]

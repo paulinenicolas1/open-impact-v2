@@ -31,7 +31,7 @@ dev = [
     "httpx>=0.27.0",
     "ty>=0.0.1a0", 
 ]
-data-science = [
+pipelines = [
     "click>=8.3.1",
     "pandas>=2.3.3",
     "plotly>=6.3.1",
@@ -81,4 +81,4 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [project.scripts]
-meteo = "data_science.cli.main:main"
+meteo = "src.pipelines.cli.main:main"
