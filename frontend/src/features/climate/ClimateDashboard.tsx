@@ -100,7 +100,9 @@ const formatRainfall = (value: number | null) => {
   return formatted ? `${formatted} mm` : 'Donnée indisponible';
 };
 
-type AnnualDataRow = Record<string, string>;
+type AnnualDataRow = Record<string, string> & {
+  data?: Record<string, string>;
+};
 type AnnualDataResponse =
   | AnnualDataRow[]
   | {
@@ -168,10 +170,11 @@ export function ClimateDashboard() {
           if (!cityKey) {
             return;
           }
+          const nestedData = row.data ?? {};
           nextMetrics[cityKey] = {
-            avgTemp: toNumber(row.TMM),
-            maxTemp: toNumber(row.TXAB),
-            rainfall: toNumber(row.RR),
+            avgTemp: toNumber(nestedData.TMM ?? row.TMM),
+            maxTemp: toNumber(nestedData.TXAB ?? row.TXAB),
+            rainfall: toNumber(nestedData.RR ?? row.RR),
           };
         });
         setYearlyMetrics(nextMetrics);
