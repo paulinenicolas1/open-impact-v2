@@ -6,5 +6,5 @@ router = APIRouter()
 
 
 @router.get("/annual_data")
-async def read_annual_data() -> list[dict[str, str]]:
+async def read_annual_data() -> list[dict[str, str | dict[str, str]]]:
     return get_annual_data()
