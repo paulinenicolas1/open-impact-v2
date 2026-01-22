@@ -99,50 +99,20 @@ const formatRainfall = (value: number | null) => {
   return formatted ? `${formatted} mm` : 'Donnée indisponible';
 };
 
-const parseCsvLine = (line: string, delimiter: string) => {
-  const values: string[] = [];
-  let current = '';
-  let insideQuotes = false;
+type AnnualDataRow = Record<string, string>;
+type AnnualDataResponse =
+  | AnnualDataRow[]
+  | {
+      data?: AnnualDataRow[];
+      items?: AnnualDataRow[];
+      rows?: AnnualDataRow[];
+    };
 
-  for (let i = 0; i < line.length; i += 1) {
-    const char = line[i];
-    if (char === '"') {
-      if (insideQuotes && line[i + 1] === '"') {
-        current += '"';
-        i += 1;
-      } else {
-        insideQuotes = !insideQuotes;
-      }
-      continue;
-    }
-    if (char === delimiter && !insideQuotes) {
-      values.push(current);
-      current = '';
-      continue;
-    }
-    current += char;
+const resolveAnnualRows = (payload: AnnualDataResponse): AnnualDataRow[] => {
+  if (Array.isArray(payload)) {
+    return payload;
   }
-  values.push(current);
-  return values;
-};
-
-const parseCsv = (text: string) => {
-  const trimmed = text.trim();
-  if (!trimmed) {
-    return [] as Record<string, string>[];
-  }
-  const lines = trimmed.split(/\r?\n/);
-  const headerLine = lines[0];
-  const delimiter = headerLine.includes(';') && !headerLine.includes(',') ? ';' : ',';
-  const headers = parseCsvLine(headerLine, delimiter).map((header) => header.trim());
-  return lines.slice(1).map((line) => {
-    const values = parseCsvLine(line, delimiter);
-    const row: Record<string, string> = {};
-    headers.forEach((header, index) => {
-      row[header] = values[index] ?? '';
-    });
-    return row;
-  });
+  return payload.data ?? payload.items ?? payload.rows ?? [];
 };
 
 const toNumber = (value: string | undefined) => {
@@ -184,19 +154,19 @@ export function ClimateDashboard() {
     const loadYearlyMetrics = async () => {
       setIsLoadingMetrics(true);
       try {
-        const response = await fetch('/data/output/final_yearly.csv');
+        const response = await fetch('/api/v1/annual_data');
         if (!response.ok) {
           return;
         }
-        const text = await response.text();
-        const rows = parseCsv(text);
+        const payload = (await response.json()) as AnnualDataResponse;
+        const rows = resolveAnnualRows(payload);
         const nextMetrics: YearlyMetricMap = {};
         rows.forEach((row) => {
           const year = Number.parseInt(String(row.AAAA ?? '').trim(), 10);
           if (year !== lastFullYear) {
             return;
           }
-          const cityKey = String(row.ville ?? '').trim();
+          const cityKey = String(row.ville ?? '').trim().toLowerCase();
           if (!cityKey) {
             return;
           }
