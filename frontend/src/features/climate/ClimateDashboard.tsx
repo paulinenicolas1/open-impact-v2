@@ -155,19 +155,19 @@ const toNumber = (value: string | undefined) => {
 
 const metricCards = [
   {
-    title: 'Température moyenne',
+    title: '🌡️Température moyenne',
     key: 'avgTemp',
     changeKey: 'avgTempChange',
     accent: 'orange',
   },
   {
-    title: 'Température max',
+    title: '🔥 Température max',
     key: 'maxTemp',
     changeKey: 'maxTempChange',
     accent: 'gray',
   },
   {
-    title: 'Précipitation',
+    title: '☔ Précipitation',
     key: 'rainfall',
     changeKey: 'rainfallChange',
     accent: 'blue',
