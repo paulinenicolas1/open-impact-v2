@@ -1,17 +1,15 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
-import yaml
 
 import click
 import pandas as pd
-
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+import yaml
 
-import logging
-
-from data_processing.build_weather_datasets import load_city_df, build_yearly, build_monthly
+from pipelines.data_processing.build_weather_datasets import build_monthly, build_yearly, load_city_df
 
 
 console = Console()
@@ -27,6 +25,7 @@ def make_logger(verbosity: int) -> logging.Logger:
 
     logger.propagate = False
     return logger
+
 
 def load_config(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
