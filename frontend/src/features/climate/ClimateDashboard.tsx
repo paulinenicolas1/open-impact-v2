@@ -17,6 +17,7 @@ import Header from '../../components/layout/Header';
 
 import { MetricCard } from '../../components/layout/MetricCard';
 import { apiClient } from '../../lib/apiClient';
+import { MetricBandChart } from '../../components/charts/MetricBandChart';
 
 const summaryText =
   'Analyse comparative approfondie des tendances climatiques et des précipitations observées de 1900 à 2025. Données basées sur les relevés historiques de Météo-France.';
@@ -75,6 +76,15 @@ interface YearlyMetric {
 }
 
 type YearlyMetricMap = Record<string, YearlyMetric>;
+
+interface AnnualSeriesPoint {
+  year: number;
+  avgTemp: number | null;
+  minTemp: number | null;
+  maxTemp: number | null;
+}
+
+type AnnualSeriesMap = Record<string, AnnualSeriesPoint[]>;
 
 const lastFullYear = new Date().getFullYear() - 1;
 
@@ -151,6 +161,7 @@ export function ClimateDashboard() {
   const theme = useMantineTheme();
   const [activeCity, setActiveCity] = useState<CityName>('Paris');
   const [yearlyMetrics, setYearlyMetrics] = useState<YearlyMetricMap>({});
+  const [annualSeries, setAnnualSeries] = useState<AnnualSeriesMap>({});
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
 
   useEffect(() => {
@@ -161,9 +172,10 @@ export function ClimateDashboard() {
         const payload = response.data;
         const rows = resolveAnnualRows(payload);
         const nextMetrics: YearlyMetricMap = {};
+        const nextSeries: AnnualSeriesMap = {};
         rows.forEach((row) => {
           const year = Number.parseInt(String(row.AAAA ?? '').trim(), 10);
-          if (year !== lastFullYear) {
+          if (!Number.isFinite(year)) {
             return;
           }
           const cityKey = String(row.ville ?? '').trim().toLowerCase();
@@ -171,13 +183,34 @@ export function ClimateDashboard() {
             return;
           }
           const nestedData = row.data ?? {};
-          nextMetrics[cityKey] = {
-            avgTemp: toNumber(nestedData.TMM ?? row.TMM),
-            maxTemp: toNumber(nestedData.TXAB ?? row.TXAB),
-            rainfall: toNumber(nestedData.RR ?? row.RR),
-          };
+          const avgTemp = toNumber(nestedData.TMM ?? row.TMM);
+          const maxTemp = toNumber(nestedData.TXAB ?? row.TXAB);
+          const minTemp = toNumber(nestedData.TXMIN ?? row.TXMIN);
+          const rainfall = toNumber(nestedData.RR ?? row.RR);
+
+          if (!nextSeries[cityKey]) {
+            nextSeries[cityKey] = [];
+          }
+          nextSeries[cityKey].push({
+            year,
+            avgTemp,
+            minTemp,
+            maxTemp,
+          });
+
+          if (year === lastFullYear) {
+            nextMetrics[cityKey] = {
+              avgTemp,
+              maxTemp,
+              rainfall,
+            };
+          }
+        });
+        Object.values(nextSeries).forEach((series) => {
+          series.sort((a, b) => a.year - b.year);
         });
         setYearlyMetrics(nextMetrics);
+        setAnnualSeries(nextSeries);
       } catch (error) {
         console.warn('Impossible de charger les métriques annuelles.', error);
       } finally {
@@ -215,6 +248,7 @@ export function ClimateDashboard() {
     ...data.metrics,
     ...computedMetrics,
   };
+  const activeSeries = annualSeries[cityKeyLookup[activeCity]] ?? [];
 
   return (
     <Box
@@ -286,6 +320,22 @@ export function ClimateDashboard() {
               fontWeight: 600,
             },
           }}
+        />
+
+        <MetricBandChart
+          title="Température annuelle moyenne"
+          subtitle="Courbe annuelle avec intervalle min / max pour chaque ville."
+          points={activeSeries}
+          metricKey="avgTemp"
+          upperKey="maxTemp"
+          lowerKey="minTemp"
+          metricLabel="Moyenne"
+          bandLabel="Min / Max"
+          upperLabel="Température maximale"
+          lowerLabel="Température minimale"
+          accentColor="#4cc9f0"
+          unitSuffix="°C"
+          isLoading={isLoadingMetrics}
         />
       </Container>
     </Box>
