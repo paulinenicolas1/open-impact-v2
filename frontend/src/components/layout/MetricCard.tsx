@@ -1,4 +1,6 @@
 import { Paper, Skeleton, Stack, Text, useMantineTheme } from '@mantine/core';
+import type { CSSProperties } from 'react';
+import styles from './MetricCard.module.css';
 
 interface MetricCardProps {
   title: string;
@@ -31,10 +33,13 @@ export function MetricCard({
       p="md"
       radius="lg"
       withBorder
-      style={{
-        backgroundColor: theme.colors.dark[7],
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-      }}
+      className={styles.card}
+      style={
+        {
+          backgroundColor: theme.colors.dark[7],
+          '--accent-color': accentColor,
+        } as CSSProperties
+      }
     >
       <Stack gap={8}>
         <Text size="xs" tt="uppercase" c="dimmed" style={{ letterSpacing: '0.1em' }}>
