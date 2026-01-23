@@ -331,6 +331,8 @@ export function ClimateDashboard() {
           lowerKey="minTemp"
           metricLabel="Moyenne"
           bandLabel="Min / Max"
+          upperLabel="Température maximale"
+          lowerLabel="Température minimale"
           accentColor="#4cc9f0"
           unitSuffix="°C"
           isLoading={isLoadingMetrics}
