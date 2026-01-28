@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Header from '../../components/layout/Header';
 
 import { MetricCard } from '../../components/layout/MetricCard';
+import { MonthlySeriesChart, type MonthlySeriesPoint } from '../../components/charts/MonthlySeriesChart';
 import { apiClient } from '../../lib/apiClient';
 import { MetricBandChart } from '../../components/charts/MetricBandChart';
 
@@ -85,8 +86,23 @@ interface AnnualSeriesPoint {
 }
 
 type AnnualSeriesMap = Record<string, AnnualSeriesPoint[]>;
+type MonthlySeriesMap = Record<string, MonthlySeriesPoint[]>;
 
 const lastFullYear = new Date().getFullYear() - 1;
+const monthLabels = [
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
+];
 
 const formatNumber = (value: number | null, options: Intl.NumberFormatOptions) => {
   if (value === null || !Number.isFinite(value)) {
@@ -121,7 +137,7 @@ type AnnualDataResponse =
       rows?: AnnualDataRow[];
     };
 
-const resolveAnnualRows = (payload: AnnualDataResponse): AnnualDataRow[] => {
+const resolveRows = (payload: AnnualDataResponse): AnnualDataRow[] => {
   if (Array.isArray(payload)) {
     return payload;
   }
@@ -157,23 +173,63 @@ const metricCards = [
   },
 ] as const;
 
+const normalizeMonth = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace('é', 'e')
+    .replace('è', 'e')
+    .replace('ê', 'e')
+    .replace('ë', 'e')
+    .replace('à', 'a')
+    .replace('â', 'a')
+    .replace('î', 'i')
+    .replace('ï', 'i')
+    .replace('ô', 'o')
+    .replace('ö', 'o')
+    .replace('û', 'u')
+    .replace('ü', 'u');
+
+const monthIndexFromRow = (row: Record<string, string>) => {
+  const rawMonthNumber = String(row.MM ?? '').trim();
+  if (rawMonthNumber) {
+    const parsed = Number.parseInt(rawMonthNumber, 10);
+    if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 12) {
+      return parsed;
+    }
+  }
+
+  const rawMonthLabel = normalizeMonth(String(row.MOIS ?? ''));
+  const monthLookup = monthLabels.map((label) => normalizeMonth(label));
+  const index = monthLookup.findIndex((label) => label === rawMonthLabel);
+  if (index >= 0) {
+    return index + 1;
+  }
+
+  return null;
+};
+
 export function ClimateDashboard() {
   const theme = useMantineTheme();
   const [activeCity, setActiveCity] = useState<CityName>('Paris');
   const [yearlyMetrics, setYearlyMetrics] = useState<YearlyMetricMap>({});
   const [annualSeries, setAnnualSeries] = useState<AnnualSeriesMap>({});
+  const [monthlySeries, setMonthlySeries] = useState<MonthlySeriesMap>({});
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
 
   useEffect(() => {
     const loadYearlyMetrics = async () => {
       setIsLoadingMetrics(true);
       try {
-        const response = await apiClient.get<AnnualDataResponse>('/annual_data');
-        const payload = response.data;
-        const rows = resolveAnnualRows(payload);
+        const [annualResponse, monthlyResponse] = await Promise.all([
+          apiClient.get<AnnualDataResponse>('/annual_data'),
+          apiClient.get<AnnualDataResponse>('/monthly_data'),
+        ]);
+        const annualRows = resolveRows(annualResponse.data);
+        const monthlyRows = resolveRows(monthlyResponse.data);
         const nextMetrics: YearlyMetricMap = {};
         const nextSeries: AnnualSeriesMap = {};
-        rows.forEach((row) => {
+        annualRows.forEach((row) => {
           const year = Number.parseInt(String(row.AAAA ?? '').trim(), 10);
           if (!Number.isFinite(year)) {
             return;
@@ -211,6 +267,44 @@ export function ClimateDashboard() {
         });
         setYearlyMetrics(nextMetrics);
         setAnnualSeries(nextSeries);
+
+        const monthlyMap: Record<string, Record<number, Array<number | null>>> = {};
+        monthlyRows.forEach((row) => {
+          const year = Number.parseInt(String(row.AAAA ?? '').trim(), 10);
+          if (!Number.isFinite(year)) {
+            return;
+          }
+          const cityKey = String(row.ville ?? '').trim().toLowerCase();
+          if (!cityKey) {
+            return;
+          }
+          const monthIndex = monthIndexFromRow(row);
+          if (!monthIndex) {
+            return;
+          }
+          const nestedData = row.data ?? {};
+          const avgTemp = toNumber(nestedData.TMM ?? row.TMM);
+
+          if (!monthlyMap[cityKey]) {
+            monthlyMap[cityKey] = {};
+          }
+          if (!monthlyMap[cityKey][year]) {
+            monthlyMap[cityKey][year] = Array.from({ length: 12 }, () => null);
+          }
+          monthlyMap[cityKey][year][monthIndex - 1] = avgTemp;
+        });
+
+        const nextMonthlySeries: MonthlySeriesMap = {};
+        Object.entries(monthlyMap).forEach(([cityKey, yearMap]) => {
+          const series = Object.entries(yearMap)
+            .map(([year, values]) => ({
+              year: Number(year),
+              values,
+            }))
+            .sort((a, b) => a.year - b.year);
+          nextMonthlySeries[cityKey] = series;
+        });
+        setMonthlySeries(nextMonthlySeries);
       } catch (error) {
         console.warn('Impossible de charger les métriques annuelles.', error);
       } finally {
@@ -249,6 +343,7 @@ export function ClimateDashboard() {
     ...computedMetrics,
   };
   const activeSeries = annualSeries[cityKeyLookup[activeCity]] ?? [];
+  const activeMonthlySeries = monthlySeries[cityKeyLookup[activeCity]] ?? [];
 
   return (
     <Box
@@ -337,6 +432,19 @@ export function ClimateDashboard() {
           unitSuffix="°C"
           isLoading={isLoadingMetrics}
         />
+
+        <Box mt={24}>
+          <MonthlySeriesChart
+            title="Cycle saisonnier des températures moyennes mensuelles"
+            subtitle="Chaque courbe représente une année, du mois de janvier à décembre."
+            series={activeMonthlySeries}
+            xLabels={monthLabels}
+            accentColor="#f4a261"
+            unitSuffix="°C"
+            isLoading={isLoadingMetrics}
+            defaultYears={[2025, 1985]}
+          />
+        </Box>
       </Container>
     </Box>
   );
