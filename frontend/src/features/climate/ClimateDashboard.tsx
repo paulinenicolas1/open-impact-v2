@@ -87,8 +87,14 @@ interface AnnualSeriesPoint {
 
 type AnnualSeriesMap = Record<string, AnnualSeriesPoint[]>;
 type MonthlySeriesMap = Record<string, MonthlySeriesPoint[]>;
+interface HotDaysPoint {
+  year: number;
+  value: number | null;
+}
+type HotDaysSeriesMap = Record<string, HotDaysPoint[]>;
 
 const lastFullYear = new Date().getFullYear() - 1;
+const hotDaysWindowYears = 30;
 const monthLabels = [
   'Janvier',
   'Février',
@@ -215,7 +221,9 @@ export function ClimateDashboard() {
   const [yearlyMetrics, setYearlyMetrics] = useState<YearlyMetricMap>({});
   const [annualSeries, setAnnualSeries] = useState<AnnualSeriesMap>({});
   const [monthlySeries, setMonthlySeries] = useState<MonthlySeriesMap>({});
+  const [hotDaysSeries, setHotDaysSeries] = useState<HotDaysSeriesMap>({});
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
+  const [hoveredHotDays, setHoveredHotDays] = useState<HotDaysPoint | null>(null);
 
   useEffect(() => {
     const loadYearlyMetrics = async () => {
@@ -229,6 +237,7 @@ export function ClimateDashboard() {
         const monthlyRows = resolveRows(monthlyResponse.data);
         const nextMetrics: YearlyMetricMap = {};
         const nextSeries: AnnualSeriesMap = {};
+        const nextHotDays: Record<string, Map<number, number | null>> = {};
         annualRows.forEach((row) => {
           const year = Number.parseInt(String(row.AAAA ?? '').trim(), 10);
           if (!Number.isFinite(year)) {
@@ -254,6 +263,11 @@ export function ClimateDashboard() {
             maxTemp,
           });
 
+          if (!nextHotDays[cityKey]) {
+            nextHotDays[cityKey] = new Map();
+          }
+          nextHotDays[cityKey].set(year, toNumber(nestedData.NBJTX25 ?? row.NBJTX25));
+
           if (year === lastFullYear) {
             nextMetrics[cityKey] = {
               avgTemp,
@@ -267,6 +281,13 @@ export function ClimateDashboard() {
         });
         setYearlyMetrics(nextMetrics);
         setAnnualSeries(nextSeries);
+        const nextHotDaysSeries: HotDaysSeriesMap = {};
+        Object.entries(nextHotDays).forEach(([cityKey, yearMap]) => {
+          nextHotDaysSeries[cityKey] = Array.from(yearMap.entries())
+            .map(([year, value]) => ({ year, value }))
+            .sort((a, b) => a.year - b.year);
+        });
+        setHotDaysSeries(nextHotDaysSeries);
 
         const monthlyMap: Record<string, Record<number, Array<number | null>>> = {};
         monthlyRows.forEach((row) => {
@@ -344,6 +365,34 @@ export function ClimateDashboard() {
   };
   const activeSeries = annualSeries[cityKeyLookup[activeCity]] ?? [];
   const activeMonthlySeries = monthlySeries[cityKeyLookup[activeCity]] ?? [];
+  const activeHotDaysSeries = hotDaysSeries[cityKeyLookup[activeCity]] ?? [];
+  const hotDaysWindowedSeries = useMemo(() => {
+    if (activeHotDaysSeries.length === 0) {
+      return [];
+    }
+    const latestYear = activeHotDaysSeries[activeHotDaysSeries.length - 1]?.year;
+    if (!latestYear) {
+      return activeHotDaysSeries;
+    }
+    const minYear = latestYear - (hotDaysWindowYears - 1);
+    return activeHotDaysSeries.filter((point) => point.year >= minYear);
+  }, [activeHotDaysSeries]);
+  const hotDaysLabelStep = useMemo(() => {
+    const count = hotDaysWindowedSeries.length;
+    if (count >= 32) {
+      return 3;
+    }
+    if (count >= 20) {
+      return 2;
+    }
+    return 1;
+  }, [hotDaysWindowedSeries.length]);
+  const hotDaysMax = hotDaysWindowedSeries.reduce((maxValue, point) => {
+    if (point.value === null) {
+      return maxValue;
+    }
+    return Math.max(maxValue, point.value);
+  }, 0);
 
   return (
     <Box
@@ -445,6 +494,163 @@ export function ClimateDashboard() {
             defaultYears={[2025, 1985]}
           />
         </Box>
+
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing={20} mt={24}>
+          <Paper
+            p="lg"
+            radius="lg"
+            withBorder
+            style={{
+              backgroundColor: theme.colors.dark[7],
+              borderColor: theme.colors.dark[5],
+            }}
+          >
+            <Stack gap="sm">
+              <Group justify="space-between" align="flex-start">
+                <Stack gap={4}>
+                  <Text fw={600}>Jours &gt; 25°C</Text>
+                  <Text size="sm" c="dimmed">
+                    Nombre de jours avec une température maximale supérieure à 25°C.
+                  </Text>
+                </Stack>
+              </Group>
+              {isLoadingMetrics ? (
+                <Text size="sm" c="dimmed">
+                  Chargement des données annuelles…
+                </Text>
+              ) : hotDaysWindowedSeries.length === 0 ? (
+                <Text size="sm" c="dimmed">
+                  Aucune donnée disponible pour cette ville.
+                </Text>
+              ) : (
+                <Box
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    gap: 4,
+                    minHeight: 190,
+                    width: '100%',
+                  }}
+                >
+                  {hotDaysWindowedSeries.map((point, index) => {
+                    const showLabel = index % hotDaysLabelStep === 0;
+                    const height =
+                      point.value === null || hotDaysMax === 0
+                        ? 4
+                        : Math.max(4, (point.value / hotDaysMax) * 170);
+                    const isHovered = hoveredHotDays?.year === point.year;
+                    return (
+                      <Box
+                        key={point.year}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 6,
+                          flex: '1 1 0',
+                          minWidth: 0,
+                          position: 'relative',
+                        }}
+                        onMouseEnter={() => setHoveredHotDays(point)}
+                        onMouseLeave={() => setHoveredHotDays(null)}
+                      >
+                        {isHovered && point.value !== null ? (
+                          <Box
+                            style={{
+                              position: 'absolute',
+                              top: -56,
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              backgroundColor: theme.colors.dark[9],
+                              color: theme.white,
+                              padding: '8px 10px',
+                              borderRadius: 10,
+                              fontSize: theme.fontSizes.xs,
+                              boxShadow: '0 10px 20px rgba(0, 0, 0, 0.35)',
+                              border: `1px solid ${theme.colors.dark[5]}`,
+                              whiteSpace: 'nowrap',
+                              zIndex: 5,
+                            }}
+                          >
+                            {`Année ${point.year} : ${point.value} jours avec Tmax > 25°C`}
+                          </Box>
+                        ) : null}
+                        <Box
+                          style={{
+                            width: '100%',
+                            maxWidth: 12,
+                            height,
+                            borderRadius: 6,
+                            background:
+                              'linear-gradient(180deg, rgba(255, 180, 82, 0.95) 0%, rgba(255, 112, 67, 0.8) 100%)',
+                            boxShadow: '0 6px 12px rgba(0, 0, 0, 0.25)',
+                            opacity: isHovered ? 1 : 0.75,
+                            transform: isHovered ? 'translateY(-4px)' : 'none',
+                            transition: 'transform 160ms ease, opacity 160ms ease',
+                          }}
+                        />
+                        <Text
+                          size="xs"
+                          c="dimmed"
+                          style={{
+                            letterSpacing: 0.2,
+                            height: 26,
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            justifyContent: 'center',
+                            transform: showLabel ? 'rotate(-35deg)' : 'none',
+                            transformOrigin: 'top center',
+                            opacity: showLabel ? 1 : 0,
+                          }}
+                        >
+                          {showLabel ? point.year : ''}
+                        </Text>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
+            </Stack>
+          </Paper>
+
+          <Paper
+            p="lg"
+            radius="lg"
+            withBorder
+            style={{
+              backgroundColor: theme.colors.dark[7],
+              borderColor: theme.colors.dark[5],
+            }}
+          >
+            <Stack gap="sm">
+              <Group justify="space-between" align="flex-start">
+                <Stack gap={4}>
+                  <Text fw={600}>Deuxième graphique</Text>
+                  <Text size="sm" c="dimmed">
+                    Emplacement pour un indicateur complémentaire.
+                  </Text>
+                </Stack>
+                <Badge radius="xl" color="gray" variant="light">
+                  À définir
+                </Badge>
+              </Group>
+              <Box
+                style={{
+                  minHeight: 190,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 12,
+                  border: `1px dashed ${theme.colors.dark[4]}`,
+                  color: theme.colors.dark[2],
+                  fontSize: theme.fontSizes.sm,
+                }}
+              >
+                Sélectionner une métrique pour compléter cette section.
+              </Box>
+            </Stack>
+          </Paper>
+        </SimpleGrid>
       </Container>
     </Box>
   );
